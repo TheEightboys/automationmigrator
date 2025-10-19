@@ -1,6 +1,7 @@
 import React from 'react';
-import { Home, RefreshCw, Bot, HelpCircle, CreditCard, User, LogOut } from 'lucide-react';
+import { Zap, FileJson, User, LogOut, LayoutDashboard, Bot, HelpCircle, CreditCard } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   activeView: string;
@@ -8,57 +9,75 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) => {
-  const { signOut, profile } = useAuth();
+  const { signOut, user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      navigate('/');
+    } catch (error) {
+      console.error('Sign out error:', error);
+    }
+  };
 
   const menuItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: Home },
-    { id: 'migrations', label: 'Migrations', icon: RefreshCw },
-    { id: 'agents', label: 'Agents', icon: Bot },
-    { id: 'help', label: 'Help', icon: HelpCircle },
-    { id: 'billing', label: 'Billing', icon: CreditCard },
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+    { id: 'migrations', icon: FileJson, label: 'Migrations' },
+    { id: 'agents', icon: Bot, label: 'Upcoming Agents' },
+    { id: 'billing', icon: CreditCard, label: 'Payments' },
+    { id: 'help', icon: HelpCircle, label: 'Help' },
+    { id: 'profile', icon: User, label: 'Profile' },
   ];
 
   return (
-    <div className="w-64 bg-slate-900 text-white flex flex-col h-screen">
-      <div className="p-6 border-b border-slate-800">
-        <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
-          FlowMigrate
-        </h1>
-        <p className="text-sm text-slate-400 mt-1">Workflow Automation</p>
+    <div className="w-64 bg-white border-r border-slate-200 flex flex-col h-screen">
+      <div className="p-6 border-b border-slate-200">
+        <div className="flex items-center gap-3">
+          <Zap className="text-blue-600" size={28} />
+          <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            migromat
+          </span>
+        </div>
       </div>
 
-      <nav className="flex-1 p-4 space-y-1">
-        {menuItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveView(item.id)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                activeView === item.id
-                  ? 'bg-blue-600 text-white shadow-lg'
-                  : 'text-slate-300 hover:bg-slate-800 hover:text-white'
-              }`}
-            >
-              <Icon size={20} />
-              <span className="font-medium">{item.label}</span>
-            </button>
-          );
-        })}
+      <nav className="flex-1 p-4 overflow-y-auto">
+        <ul className="space-y-2">
+          {menuItems.map((item) => (
+            <li key={item.id}>
+              <button
+                onClick={() => setActiveView(item.id)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  activeView === item.id
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <item.icon size={20} />
+                <span className="font-medium">{item.label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
       </nav>
 
-      <div className="p-4 border-t border-slate-800">
-        <div className="mb-3 px-4 py-2 bg-slate-800 rounded-lg">
-          <p className="text-xs text-slate-400">Plan</p>
-          <p className="text-sm font-semibold capitalize">{profile?.subscription_tier || 'Free'}</p>
+      <div className="p-4 border-t border-slate-200">
+        <div className="flex items-center gap-3 mb-3 px-2">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
+            <User className="text-white" size={20} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-slate-900 truncate">
+              {user?.email}
+            </p>
+          </div>
         </div>
         <button
-          onClick={signOut}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-red-600 hover:text-white transition-all"
+          onClick={handleSignOut}
+          className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors font-medium"
         >
-          <LogOut size={20} />
-          <span className="font-medium">Sign Out</span>
+          <LogOut size={18} />
+          Sign Out
         </button>
       </div>
     </div>

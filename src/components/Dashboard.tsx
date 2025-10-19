@@ -9,7 +9,7 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ setActiveView, setShowWizard }) => {
-  const { user } = useAuth();
+  const { user } = useAuth(); 
   const [stats, setStats] = useState({
     totalMigrations: 0,
     completedMigrations: 0,
