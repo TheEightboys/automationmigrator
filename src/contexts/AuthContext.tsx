@@ -47,21 +47,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const signInWithGoogle = async () => {
-    // Dynamic redirect - works for localhost and production
-    const redirectUrl = `${window.location.origin}/dashboard`;
-    
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: redirectUrl,
-        queryParams: {
-          access_type: 'offline',
-          prompt: 'consent',
-        }
+  const redirectUrl = `${window.location.origin}/auth/callback`;
+  
+  const { error } = await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectUrl,
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'consent',
       }
-    });
-    if (error) throw error;
-  };
+    }
+  });
+  if (error) throw error;
+};
 
   const signOut = async () => {
     await supabase.auth.signOut();

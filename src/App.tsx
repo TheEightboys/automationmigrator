@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
+import { AuthCallback } from './components/AuthCallback';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
 import { Migrations } from './components/Migrations';
@@ -72,6 +73,9 @@ function App() {
         <Routes>
           {/* Public Landing Page */}
           <Route path="/" element={<Landing />} />
+          
+          {/* OAuth Callback Route */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
           
           {/* Protected Dashboard Routes */}
           <Route
