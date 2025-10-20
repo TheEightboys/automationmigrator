@@ -13,6 +13,7 @@ import { Profile } from './components/Profile';
 import { MigrationWizard } from './components/MigrationWizard';
 import { Landing } from './components/Landing';
 import { RefreshCw } from 'lucide-react';
+import { PaymentSuccess } from './components/paymentsuccess';
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -76,7 +77,7 @@ function App() {
           
           {/* OAuth Callback Route */}
           <Route path="/auth/callback" element={<AuthCallback />} />
-          
+          <Route path="/payment-success" element={<PaymentSuccess />} />
           {/* Protected Dashboard Routes */}
           <Route
             path="/dashboard"

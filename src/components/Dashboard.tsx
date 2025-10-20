@@ -1,15 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, RefreshCw, Bot, FileJson, TrendingUp } from 'lucide-react';
+import { Plus, RefreshCw, Bot, FileJson, TrendingUp,AlertCircle } from 'lucide-react';
 import { supabase, Migration } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-
+import { useSubscription } from '../hooks/useSubscription';
 interface DashboardProps {
   setActiveView: (view: string) => void;
   setShowWizard: (show: boolean) => void;
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ setActiveView, setShowWizard }) => {
-  const { user } = useAuth(); 
+  const { user } = useAuth();
+   const { subscription } = useSubscription(); 
   const [stats, setStats] = useState({
     totalMigrations: 0,
     completedMigrations: 0,
@@ -23,7 +24,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveView, setShowWiza
       loadDashboardData();
     }
   }, [user]);
-
+ const handleNewMigration = () => {
+    if (!subscription.canMigrate) {
+      alert(`You've reached your limit (${subscription.migrationsUsed}/${subscription.migrationsLimit}). Please upgrade!`);
+      setActiveView('billing');
+      return;
+    }
+    setShowWizard(true);
+  };
   const loadDashboardData = async () => {
     try {
       const { data: migrations } = await supabase
@@ -105,6 +113,57 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveView, setShowWiza
         <button
           onClick={() => setShowWizard(true)}
           className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-lg"
+        >
+          <Plus size={20} />
+          New Migration
+        </button>
+      </div>
+ <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 mb-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-blue-100">Current Plan</p>
+            <p className="text-3xl font-black capitalize">{subscription.plan}</p>
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-blue-100">Migrations Used</p>
+            <p className="text-3xl font-black">
+              {subscription.migrationsLimit === -1 
+                ? `${subscription.migrationsUsed} / ∞`
+                : `${subscription.migrationsUsed} / ${subscription.migrationsLimit}`
+              }
+            </p>
+          </div>
+        </div>
+      </div>
+ {!subscription.canMigrate && (
+        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
+          <AlertCircle className="text-red-600" size={24} />
+          <div className="flex-1">
+            <p className="font-bold text-red-900">Migration Limit Reached</p>
+            <p className="text-red-800 text-sm">Upgrade to continue migrating workflows.</p>
+          </div>
+          <button
+            onClick={() => setActiveView('billing')}
+            className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700"
+          >
+            Upgrade
+          </button>
+        </div>
+      )}
+
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Welcome back to migromat</p>
+        </div>
+        <button
+          onClick={handleNewMigration}
+          disabled={!subscription.canMigrate}
+          className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold ${
+            subscription.canMigrate
+              ? 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
         >
           <Plus size={20} />
           New Migration

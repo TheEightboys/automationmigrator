@@ -127,6 +127,52 @@ CREATE TABLE IF NOT EXISTS agents (
 );
 
 ALTER TABLE agents ENABLE ROW LEVEL SECURITY;
+-- Add subscription fields to profiles table
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT 'free';
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_status TEXT DEFAULT 'inactive';
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS subscription_period_end TIMESTAMP;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS migrations_used INTEGER DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS migrations_reset_date TIMESTAMP DEFAULT NOW();
+
+-- Create subscriptions table for detailed tracking
+CREATE TABLE IF NOT EXISTS subscriptions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+  plan TEXT NOT NULL,
+  status TEXT NOT NULL,
+  period_start TIMESTAMP NOT NULL,
+  period_end TIMESTAMP NOT NULL,
+  payment_provider TEXT DEFAULT 'dodo',
+  payment_id TEXT,
+  created_at timestamptz DEFAULT NOW() NOT NULL,
+  updated_at timestamptz DEFAULT NOW() NOT NULL
+);
+
+-- Enable RLS on subscriptions
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for subscriptions
+CREATE POLICY "Users can view own subscriptions"
+  ON subscriptions FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Service role can manage subscriptions"
+  ON subscriptions FOR ALL
+  USING (auth.role() = 'service_role');
+
+-- Create index for subscriptions
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_status ON subscriptions(status);
+
+-- Update existing users to have default subscription values
+UPDATE profiles 
+SET 
+  subscription_plan = 'free',
+  subscription_status = 'inactive',
+  migrations_used = 0,
+  migrations_reset_date = NOW()
+WHERE subscription_plan IS NULL;
 
 CREATE POLICY "Users can view own agents"
   ON agents FOR SELECT

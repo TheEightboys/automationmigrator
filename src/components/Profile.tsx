@@ -8,7 +8,7 @@ export const Profile: React.FC = () => {
   if (!user) {
     return <div className="p-8">Loading...</div>;
   }
-
+  
   return (
     <div className="p-8">
       <div className="mb-8">
