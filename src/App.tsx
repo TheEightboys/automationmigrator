@@ -76,7 +76,7 @@ function App() {
           <Route path="/" element={<Landing />} />
           
           {/* OAuth Callback Route */}
-          <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
           <Route path="/payment-success" element={<PaymentSuccess />} />
           {/* Protected Dashboard Routes */}
           <Route
