@@ -1,44 +1,39 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { RefreshCw } from 'lucide-react';
+import { Loader } from 'lucide-react';
 
 export const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleCallback = async () => {
-      try {
-        // Get session after OAuth redirect
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error('Auth callback error:', error);
-          navigate('/');
-          return;
-        }
+    handleCallback();
+  }, []);
 
-        if (session) {
-          // Successfully authenticated, redirect to dashboard
-          navigate('/dashboard');
-        } else {
-          // No session, redirect to home
-          navigate('/');
-        }
-      } catch (error) {
-        console.error('Callback error:', error);
+  const handleCallback = async () => {
+    try {
+      const { data, error } = await supabase.auth.getSession();
+      
+      if (error) throw error;
+
+      if (data.session) {
+        // User is authenticated, redirect to dashboard
+        navigate('/dashboard');
+      } else {
+        // No session, redirect to login
         navigate('/');
       }
-    };
-
-    handleCallback();
-  }, [navigate]);
+    } catch (error) {
+      console.error('Auth callback error:', error);
+      navigate('/');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">
       <div className="text-center">
-        <RefreshCw className="mx-auto text-orange-500 animate-spin mb-4" size={48} />
-        <p className="text-gray-600 text-lg">Completing sign in...</p>
+        <Loader className="mx-auto text-blue-600 animate-spin mb-4" size={48} />
+        <p className="text-gray-600">Signing you in...</p>
       </div>
     </div>
   );
