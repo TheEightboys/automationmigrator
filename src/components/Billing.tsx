@@ -68,6 +68,7 @@ export const Billing: React.FC = () => {
 
   if (!checkoutLink || checkoutLink === 'undefined') {
     alert('Checkout link not configured. Please add it to environment variables.');
+    console.error('Missing checkout link for:', planKey, isYearly ? 'yearly' : 'monthly');
     return;
   }
 
@@ -78,19 +79,10 @@ export const Billing: React.FC = () => {
 
   setLoading(planName);
 
-  // Add redirect URLs as query parameters
-  const url = new URL(checkoutLink);
-  url.searchParams.append('success_url', `${window.location.origin}/payment-success`);
-  url.searchParams.append('cancel_url', `${window.location.origin}/billing`);
-  url.searchParams.append('customer_email', user.email || '');
-  
-  // Optional: Add metadata for tracking
-  url.searchParams.append('metadata[user_id]', user.id);
-  url.searchParams.append('metadata[plan]', planName);
-  url.searchParams.append('metadata[billing_period]', isYearly ? 'yearly' : 'monthly');
-
-  window.location.href = url.toString();
+  // Simply redirect to Dodo checkout link
+  window.location.href = checkoutLink;
 };
+
   return (
     <div className="min-h-screen bg-white p-8">
       <div className="max-w-6xl mx-auto">
