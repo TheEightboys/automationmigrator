@@ -1,8 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/api/dodo-webhook",
+      "destination": "/api/dodo-webhook.ts"
     }
   ]
 }
