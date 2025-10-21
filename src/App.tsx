@@ -110,6 +110,14 @@ function App() {
               </PublicRoute>
             }
           />
+          <Route
+            path="/auth"
+            element={
+              <PublicRoute>
+                <Auth />
+              </PublicRoute>
+            }
+          />
 
           {/* Auth Callback */}
           <Route path="/auth/callback" element={<AuthCallback />} />

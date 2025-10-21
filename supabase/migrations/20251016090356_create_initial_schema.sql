@@ -212,6 +212,34 @@ CREATE POLICY "Anyone can view help articles"
   ON help_articles FOR SELECT
   TO authenticated
   USING (true);
+-- Create product_reviews table
+CREATE TABLE product_reviews (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+  feedback TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index for faster queries
+CREATE INDEX idx_reviews_user_id ON product_reviews(user_id);
+CREATE INDEX idx_reviews_created_at ON product_reviews(created_at DESC);
+
+-- Enable Row Level Security
+ALTER TABLE product_reviews ENABLE ROW LEVEL SECURITY;
+
+-- Allow users to read all reviews
+CREATE POLICY "Anyone can view reviews" ON product_reviews
+  FOR SELECT USING (true);
+
+-- Allow authenticated users to insert their own reviews
+CREATE POLICY "Users can create reviews" ON product_reviews
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Allow users to update their own reviews
+CREATE POLICY "Users can update own reviews" ON product_reviews
+  FOR UPDATE USING (auth.uid() = user_id);
 
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS idx_migrations_user_id ON migrations(user_id);
