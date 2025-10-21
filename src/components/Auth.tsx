@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Lock, Loader } from 'lucide-react';
+import { Mail, Lock, Loader, Github } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 
 export const Auth: React.FC = () => {
@@ -38,7 +38,25 @@ export const Auth: React.FC = () => {
       setLoading(false);
     }
   };
+const handleGitHubAuth = async () => {
+  setLoading(true);
+  setError('');
+  setSuccess('');
 
+  try {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'github',
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
+    if (error) throw error;
+  } catch (error: any) {
+    console.error('GitHub auth error:', error);
+    setError(error.message || 'Failed to sign in with GitHub');
+    setLoading(false);
+  }
+};
   const handleGoogleAuth = async () => {
     setLoading(true);
     setError('');
@@ -74,6 +92,14 @@ export const Auth: React.FC = () => {
             {error}
           </div>
         )}
+<button
+  onClick={handleGitHubAuth}
+  disabled={loading}
+  className="w-full flex items-center justify-center gap-3 bg-gray-900 text-white px-6 py-3 rounded-lg font-semibold hover:bg-gray-800 transition-all disabled:opacity-50"
+>
+  <Github size={20} />
+  Continue with GitHub
+</button>
 
         <button
           onClick={handleGoogleAuth}
@@ -180,3 +206,7 @@ export const Auth: React.FC = () => {
     </div>
   );
 };
+function setSuccess(arg0: string) {
+  throw new Error('Function not implemented.');
+}
+

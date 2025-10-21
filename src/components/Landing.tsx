@@ -238,7 +238,7 @@ export const Landing: React.FC = () => {
               Pricing tailored to your needs
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
-              The first 10 migrations are on us. If you love it, upgrade to unlock more.
+              Upgrade to unlock powerful migration features.
             </p>
 
             {/* Billing Toggle */}
@@ -348,16 +348,6 @@ export const Landing: React.FC = () => {
                 </div>
               );
             })}
-          </div>
-
-          {/* Free Trial Banner */}
-          <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-8 text-center text-white max-w-4xl mx-auto mt-12">
-            <h2 className="text-3xl font-bold mb-3">
-              Start with 10 free migrations
-            </h2>
-            <p className="text-blue-100 text-lg">
-              No credit card required. Start converting workflows right now.
-            </p>
           </div>
         </div>
       </section>

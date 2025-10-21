@@ -4,5 +4,14 @@
       "source": "/api/dodo-webhook",
       "destination": "/api/dodo-webhook.ts"
     }
+    ,
+    {
+      "source": "/auth/callback",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
   ]
 }

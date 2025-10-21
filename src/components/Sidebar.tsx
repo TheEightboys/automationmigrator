@@ -32,7 +32,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) =
     { id: 'migrations', icon: FileJson, label: 'Migrations' },
     { id: 'agents', icon: Bot, label: 'Upcoming Agents' },
     { id: 'billing', icon: CreditCard, label: 'Payments' },
-    { id: 'help', icon: HelpCircle, label: 'Help' },
+    { id: 'help', icon: HelpCircle, label: 'Help&Feedback' },
     { id: 'profile', icon: User, label: 'Profile' },
   ];
 
