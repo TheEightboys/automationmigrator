@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
 import { AuthCallback } from './components/AuthCallback';
@@ -13,11 +13,18 @@ import { Profile } from './components/Profile';
 import { MigrationWizard } from './components/MigrationWizard';
 import { Landing } from './components/Landing';
 import { RefreshCw } from 'lucide-react';
-import { PaymentSuccess } from './components/paymentsuccess';
+import { useEffect } from 'react';
 
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/');
+    }
+  }, [user, loading, navigate]);
 
   if (loading) {
     return (
@@ -31,7 +38,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
-    return <Auth />;
+    return null;
   }
 
   return <>{children}</>;
@@ -67,18 +74,47 @@ function DashboardLayout() {
   );
 }
 
+// Public Route - Redirects logged-in users
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/dashboard');
+    }
+  }, [user, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center">
+        <RefreshCw className="text-blue-400 animate-spin" size={48} />
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 function App() {
   return (
     <AuthProvider>
       <Router>
         <Routes>
-          {/* Public Landing Page */}
-          <Route path="/" element={<Landing />} />
-          
-          {/* OAuth Callback Route */}
-            <Route path="/auth/callback" element={<AuthCallback />} />
-          <Route path="/payment-success" element={<PaymentSuccess />} />
-          {/* Protected Dashboard Routes */}
+          {/* Public Routes */}
+          <Route
+            path="/"
+            element={
+              <PublicRoute>
+                <Landing />
+              </PublicRoute>
+            }
+          />
+
+          {/* Auth Callback */}
+          <Route path="/auth/callback" element={<AuthCallback />} />
+
+          {/* Protected Routes */}
           <Route
             path="/dashboard"
             element={
@@ -87,8 +123,8 @@ function App() {
               </ProtectedRoute>
             }
           />
-          
-          {/* Catch all - redirect to home */}
+
+          {/* Catch all */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
