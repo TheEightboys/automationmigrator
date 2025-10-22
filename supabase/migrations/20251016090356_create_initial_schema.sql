@@ -246,6 +246,90 @@ CREATE INDEX IF NOT EXISTS idx_migrations_user_id ON migrations(user_id);
 CREATE INDEX IF NOT EXISTS idx_migrations_status ON migrations(status);
 CREATE INDEX IF NOT EXISTS idx_agents_user_id ON agents(user_id);
 CREATE INDEX IF NOT EXISTS idx_help_articles_category ON help_articles(category);
+-- Templates Marketplace Table
+CREATE TABLE workflow_templates (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  seller_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  category VARCHAR(50) NOT NULL,
+  source_platform VARCHAR(20) NOT NULL,
+  target_platforms TEXT[] NOT NULL,
+  preview_image TEXT,
+  workflow_json JSONB NOT NULL,
+  price DECIMAL(10,2) NOT NULL DEFAULT 0,
+  downloads INTEGER DEFAULT 0,
+  rating DECIMAL(3,2) DEFAULT 0,
+  total_reviews INTEGER DEFAULT 0,
+  status VARCHAR(20) DEFAULT 'active',
+  tags TEXT[],
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Template Purchases Table
+CREATE TABLE template_purchases (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  buyer_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  template_id UUID REFERENCES workflow_templates(id) ON DELETE CASCADE,
+  amount DECIMAL(10,2) NOT NULL,
+  payment_status VARCHAR(20) DEFAULT 'completed',
+  purchased_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(buyer_id, template_id)
+);
+
+-- Template Reviews Table
+CREATE TABLE template_reviews (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  template_id UUID REFERENCES workflow_templates(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+  review TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(template_id, user_id)
+);
+
+-- Create indexes
+CREATE INDEX idx_templates_seller ON workflow_templates(seller_id);
+CREATE INDEX idx_templates_category ON workflow_templates(category);
+CREATE INDEX idx_templates_created ON workflow_templates(created_at DESC);
+CREATE INDEX idx_purchases_buyer ON template_purchases(buyer_id);
+CREATE INDEX idx_purchases_template ON template_purchases(template_id);
+
+-- Enable Row Level Security
+ALTER TABLE workflow_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE template_purchases ENABLE ROW LEVEL SECURITY;
+ALTER TABLE template_reviews ENABLE ROW LEVEL SECURITY;
+
+-- RLS Policies for workflow_templates
+CREATE POLICY "Anyone can view active templates" ON workflow_templates
+  FOR SELECT USING (status = 'active');
+
+CREATE POLICY "Users can create their own templates" ON workflow_templates
+  FOR INSERT WITH CHECK (auth.uid() = seller_id);
+
+CREATE POLICY "Users can update their own templates" ON workflow_templates
+  FOR UPDATE USING (auth.uid() = seller_id);
+
+CREATE POLICY "Users can delete their own templates" ON workflow_templates
+  FOR DELETE USING (auth.uid() = seller_id);
+
+-- RLS Policies for template_purchases
+CREATE POLICY "Users can view their own purchases" ON template_purchases
+  FOR SELECT USING (auth.uid() = buyer_id);
+
+CREATE POLICY "Users can create purchases" ON template_purchases
+  FOR INSERT WITH CHECK (auth.uid() = buyer_id);
+
+-- RLS Policies for template_reviews
+CREATE POLICY "Anyone can view reviews" ON template_reviews
+  FOR SELECT USING (true);
+
+CREATE POLICY "Users can create reviews" ON template_reviews
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own reviews" ON template_reviews
+  FOR UPDATE USING (auth.uid() = user_id);
 
 -- Insert sample help articles
 INSERT INTO help_articles (category, title, content, "order") VALUES

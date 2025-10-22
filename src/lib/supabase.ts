@@ -52,3 +52,48 @@ export type HelpArticle = {
   created_at: string;
   updated_at: string;
 };
+export type WorkflowTemplate = {
+  id: string;
+  seller_id: string;
+  title: string;
+  description: string | null;
+  category: string;
+  source_platform: 'zapier' | 'n8n' | 'make';
+  target_platforms: string[];
+  preview_image: string | null;
+  workflow_json: any;
+  price: number;
+  downloads: number;
+  rating: number;
+  total_reviews: number;
+  status: string;
+  tags: string[] | null;
+  created_at: string;
+  updated_at: string;
+  seller?: {
+    email: string;
+    full_name: string;
+  };
+};
+
+export type TemplatePurchase = {
+  id: string;
+  buyer_id: string;
+  template_id: string;
+  amount: number;
+  payment_status: string;
+  purchased_at: string;
+};
+
+export type TemplateReview = {
+  id: string;
+  template_id: string;
+  user_id: string;
+  rating: number;
+  review: string | null;
+  created_at: string;
+  user?: {
+    email: string;
+    full_name: string;
+  };
+};
