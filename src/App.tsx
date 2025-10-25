@@ -9,7 +9,7 @@ import { Migrations } from './components/Migrations';
 import { Agents } from './components/Agents';
 import { Help } from './components/Help';
 import { Billing } from './components/Billing';
-import { Profile } from './components/Profile';
+
 import { MigrationWizard } from './components/MigrationWizard';
 import { Landing } from './components/Landing';
 import { RefreshCw } from 'lucide-react';
@@ -65,7 +65,7 @@ function DashboardLayout() {
         {activeView === 'agents' && <Agents />}
         {activeView === 'help' && <Help />}
         {activeView === 'billing' && <Billing />}
-        {activeView === 'profile' && <Profile />}
+       
       </main>
       {showWizard && (
         <MigrationWizard onClose={() => setShowWizard(false)} onComplete={handleWizardComplete} />

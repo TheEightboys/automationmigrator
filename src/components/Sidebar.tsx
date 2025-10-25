@@ -33,7 +33,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) =
     { id: 'agents', icon: Bot, label: 'Upcoming Agents' },
     { id: 'billing', icon: CreditCard, label: 'Payments' },
     { id: 'help', icon: HelpCircle, label: 'Help&Feedback' },
-    { id: 'profile', icon: User, label: 'Profile' },
+    
   ];
 
   const getInitials = () => {
