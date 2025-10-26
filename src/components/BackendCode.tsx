@@ -70,12 +70,12 @@ const handleGeneratePython = async (id: string, filename: string) => {
     console.log('🐍 Fetching Python code...');
     
     // Get API_URL from environment
-    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-    
-    // Fetch Python code from backend
-    const response = await fetch(`${API_URL}/api/workflows/${id}/export/python`, {
-      method: 'POST'
-    });
+   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+console.log('Using API URL:', API_URL); // Add this debug line
+
+const response = await fetch(`${API_URL}/api/workflows/${id}/export/python`, {
+  method: 'POST'
+});
     
     if (!response.ok) throw new Error('Failed to generate Python code');
     
