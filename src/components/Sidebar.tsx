@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Zap, FileJson, User, LogOut, LayoutDashboard, Bot, HelpCircle, CreditCard, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { UpgradeButton } from './UpgradeButton';
+import { UpgradeButton } from './upgradeButton';
 
 interface SidebarProps {
   activeView: string;
