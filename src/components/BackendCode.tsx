@@ -63,29 +63,35 @@ export const BackendCode: React.FC = () => {
   };
 
   // Generate Python code
-  const handleGeneratePython = async (id: string, filename: string) => {
-    try {
-      setIsGenerating(true);
-      
-      // Fetch Python code from backend
-      const response = await fetch(`http://localhost:8000/api/workflows/${id}/export/python`, {
-        method: 'POST'
-      });
-      
-      if (!response.ok) throw new Error('Failed to generate Python code');
-      
-      const pythonCode = await response.text();
-      setGeneratedCode(pythonCode);
-      
-      console.log('✅ Python code generated');
-      
-    } catch (error: any) {
-      console.error('❌ Generation error:', error);
-      setError(error.message || 'Failed to generate Python code');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  // Generate Python code
+const handleGeneratePython = async (id: string, filename: string) => {
+  try {
+    setIsGenerating(true);
+    console.log('🐍 Fetching Python code...');
+    
+    // Get API_URL from environment
+    const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    
+    // Fetch Python code from backend
+    const response = await fetch(`${API_URL}/api/workflows/${id}/export/python`, {
+      method: 'POST'
+    });
+    
+    if (!response.ok) throw new Error('Failed to generate Python code');
+    
+    const pythonCode = await response.text();
+    setGeneratedCode(pythonCode);
+    
+    console.log('✅ Python code generated');
+    
+  } catch (error: any) {
+    console.error('❌ Generation error:', error);
+    setError(error.message || 'Failed to generate Python code');
+  } finally {
+    setIsGenerating(false);
+  }
+};
+
 
   // Download Python file
   const handleDownloadPython = () => {
