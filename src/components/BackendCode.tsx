@@ -2,8 +2,9 @@
 import React, { useState, useRef } from 'react';
 import { Upload, Download, Play, Code, Copy, Check, Loader, FileJson, Terminal } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { uploadWorkflow, exportToPython } from '../lib/workflowApi';
+import { uploadWorkflow, exportToPython,exportWorkflowToPython } from '../lib/workflowApi';
 import { useAuth } from '../contexts/AuthContext';
+
 
 export const BackendCode: React.FC = () => {
   const { user } = useAuth();
@@ -64,22 +65,15 @@ export const BackendCode: React.FC = () => {
 
   // Generate Python code
   // Generate Python code
+// Generate Python code
+// Generate Python code
 const handleGeneratePython = async (id: string, filename: string) => {
   try {
     setIsGenerating(true);
     console.log('🐍 Fetching Python code...');
     
-    // Get API_URL from environment
-const API_URL = 'https://migromat-backend.onrender.com';
-console.log('Using API URL:', API_URL);
-
-const response = await fetch(`${API_URL}/api/workflows/${id}/export/python`, {
-  method: 'POST'
-});
-    
-    if (!response.ok) throw new Error('Failed to generate Python code');
-    
-    const pythonCode = await response.text();
+    // ✅ Use the workflowApi function
+    const pythonCode = await exportWorkflowToPython(id);
     setGeneratedCode(pythonCode);
     
     console.log('✅ Python code generated');
@@ -91,6 +85,9 @@ const response = await fetch(`${API_URL}/api/workflows/${id}/export/python`, {
     setIsGenerating(false);
   }
 };
+
+
+
 
 
   // Download Python file

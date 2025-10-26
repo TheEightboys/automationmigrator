@@ -279,3 +279,22 @@ export async function healthCheck(): Promise<boolean> {
     return false;
   }
 }
+// Add this new export function at the bottom of the file
+export const exportWorkflowToPython = async (workflowId: string): Promise<string> => {
+  console.log('🐍 Exporting to Python from:', API_URL);
+  
+  const response = await fetch(`${API_URL}/api/workflows/${workflowId}/export/python`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Failed to export Python code: ${error}`);
+  }
+
+  return await response.text();
+};
+
