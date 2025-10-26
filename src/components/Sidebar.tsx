@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Zap, FileJson, User, LogOut, LayoutDashboard, Bot, HelpCircle, CreditCard, Menu, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { UpgradeButton } from './UpgradeButton';
 
 interface SidebarProps {
   activeView: string;
@@ -24,16 +25,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) =
 
   const handleMenuItemClick = (viewId: string) => {
     setActiveView(viewId);
-    setIsMobileMenuOpen(false); // Close mobile menu after selection
+    setIsMobileMenuOpen(false);
   };
 
   const menuItems = [
     { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { id: 'migrations', icon: FileJson, label: 'Migrations' },
-    { id: 'agents', icon: Bot, label: 'Upcoming Agents' },
+    { id: 'agents', icon: Bot, label: 'Backend Code' },
     { id: 'billing', icon: CreditCard, label: 'Payments' },
-    { id: 'help', icon: HelpCircle, label: 'Help&Feedback' },
-    
+    { id: 'help', icon: HelpCircle, label: 'Help & Feedback' },
   ];
 
   const getInitials = () => {
@@ -48,7 +48,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) =
   };
 
   return (
-    <>  
+    <>
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-slate-200 px-4 py-3">
         <div className="flex items-center justify-between">
@@ -137,6 +137,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeView, setActiveView }) =
             ))}
           </ul>
         </nav>
+
+        {/* Upgrade Button - FIXED POSITION */}
+        <div className="p-4 border-t border-slate-200">
+          <UpgradeButton variant="sidebar" showCredits={true} />
+        </div>
 
         {/* Desktop User Info & Sign Out */}
         <div className="hidden lg:block p-4 border-t border-slate-200">

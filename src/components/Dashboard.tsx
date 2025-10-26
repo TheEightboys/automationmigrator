@@ -1,9 +1,8 @@
+// src/components/Dashboard.tsx
 import React, { useState, useEffect, useRef } from 'react';
-import { Plus, RefreshCw, Bot, FileJson, TrendingUp, AlertCircle, User, Mail, Calendar, Shield, Camera, Edit2, Save, X, Check, AlertTriangle } from 'lucide-react';
-import { supabase, Migration } from '../lib/supabase';
+import { User, Mail, Calendar, Shield, Camera, Edit2, Save, X, Check, Lock, Trash2, AlertTriangle, CheckCircle, MapPin, Briefcase, Globe } from 'lucide-react';
+import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
-import { useSearchParams } from 'react-router-dom';
-import { useSubscription } from '../hooks/useSubscription';
 
 interface DashboardProps {
   setActiveView: (view: string) => void;
@@ -11,197 +10,181 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ setActiveView, setShowWizard }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const { user } = useAuth();
-  const { subscription, refreshSubscription } = useSubscription();
   
-  const [stats, setStats] = useState({
-    totalMigrations: 0,
-    completedMigrations: 0,
-    activeMigrations: 0,
-    totalAgents: 0,
-  });
-  const [recentMigrations, setRecentMigrations] = useState<Migration[]>([]);
-  const [activating, setActivating] = useState(false);
-
   // Profile states
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.user_metadata?.avatar_url || '');
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  
   const [formData, setFormData] = useState({
-    fullName: user?.user_metadata?.full_name || '',
-    username: user?.user_metadata?.username || '',
-    bio: user?.user_metadata?.bio || '',
+    fullName: '',
+    username: '',
+    bio: '',
+    location: '',
+    website: '',
+    company: ''
   });
 
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // Load user data on mount
   useEffect(() => {
     if (user) {
-      loadDashboardData();
-      handlePaymentSuccess();
+      loadUserProfile();
     }
   }, [user]);
 
-  const handlePaymentSuccess = async () => {
-    const paymentSuccess = searchParams.get('payment');
-    const plan = searchParams.get('plan');
-
-    if (paymentSuccess === 'success' && plan && user) {
-      await updateSubscription(plan);
-      searchParams.delete('payment');
-      searchParams.delete('plan');
-      setSearchParams(searchParams);
-    }
-  };
-
-  const updateSubscription = async (plan: string) => {
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          subscription_plan: plan,
-          subscription_status: 'active',
-          subscription_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          migrations_used: 0,
-          migrations_reset_date: new Date().toISOString(),
-        })
-        .eq('id', user!.id);
-
-      if (!error) {
-        await refreshSubscription();
-        alert('Payment successful! Your subscription has been activated.');
-      }
-    } catch (error) {
-      console.error('Error updating subscription:', error);
-    }
-  };
-
-  const activateSubscription = async (plan: 'basic' | 'pro') => {
+  const loadUserProfile = async () => {
     if (!user) return;
-    setActivating(true);
 
     try {
-      const { error } = await supabase
+      const metadata = user.user_metadata || {};
+      
+      const { data: profileData, error } = await supabase
         .from('profiles')
-        .update({
-          subscription_plan: plan,
-          subscription_status: 'active',
-          subscription_period_end: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
-          migrations_used: 0,
-          migrations_reset_date: new Date().toISOString(),
-        })
-        .eq('id', user.id);
-
-      if (!error) {
-        await refreshSubscription();
-        alert(`${plan.charAt(0).toUpperCase() + plan.slice(1)} plan activated!`);
-      }
-    } catch (error) {
-      console.error('Error activating subscription:', error);
-    } finally {
-      setActivating(false);
-    }
-  };
-
-  const handleNewMigration = () => {
-    if (!subscription.canMigrate) {
-      alert(`Limit reached: ${subscription.migrationsUsed}/${subscription.migrationsLimit}. Upgrade!`);
-      setActiveView('billing');
-      return;
-    }
-    setShowWizard(true);
-  };
-
-  const loadDashboardData = async () => {
-    try {
-      const { data: migrations } = await supabase
-        .from('migrations')
         .select('*')
-        .eq('user_id', user!.id)
-        .order('created_at', { ascending: false })
-        .limit(5);
+        .eq('id', user.id)
+        .single();
 
-      const { count: totalCount } = await supabase
-        .from('migrations')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user!.id);
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error loading profile:', error);
+      }
 
-      const { count: completedCount } = await supabase
-        .from('migrations')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user!.id)
-        .eq('status', 'completed');
-
-      const { count: activeCount } = await supabase
-        .from('migrations')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user!.id)
-        .in('status', ['pending', 'processing']);
-
-      const { count: agentsCount } = await supabase
-        .from('agents')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user!.id);
-
-      setStats({
-        totalMigrations: totalCount || 0,
-        completedMigrations: completedCount || 0,
-        activeMigrations: activeCount || 0,
-        totalAgents: agentsCount || 0,
+      setFormData({
+        fullName: profileData?.full_name || metadata.full_name || '',
+        username: profileData?.username || metadata.username || '',
+        bio: profileData?.bio || metadata.bio || '',
+        location: profileData?.location || metadata.location || '',
+        website: profileData?.website || metadata.website || '',
+        company: profileData?.company || metadata.company || ''
       });
 
-      setRecentMigrations(migrations || []);
+      setAvatarUrl(profileData?.avatar_url || metadata.avatar_url || '');
     } catch (error) {
-      console.error('Error loading dashboard data:', error);
+      console.error('Error in loadUserProfile:', error);
     }
   };
 
-  // Profile functions
   const handleAvatarClick = () => {
     if (isEditing) fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => setAvatarUrl(reader.result as string);
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image must be less than 5MB');
+      return;
+    }
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please upload an image file');
+      return;
+    }
+
+    setAvatarFile(file);
+    
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarUrl(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadAvatar = async (): Promise<string | null> => {
+    if (!avatarFile || !user) return avatarUrl;
+
+    try {
+      const fileExt = avatarFile.name.split('.').pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, avatarFile, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      return avatarUrl;
     }
   };
 
   const handleSaveProfile = async () => {
+    if (!user) return;
+    
     setIsSaving(true);
+    setSaveSuccess(false);
+
     try {
-      const { error } = await supabase.auth.updateUser({
+      let finalAvatarUrl = avatarUrl;
+      if (avatarFile) {
+        const uploadedUrl = await uploadAvatar();
+        if (uploadedUrl) finalAvatarUrl = uploadedUrl;
+      }
+
+      const { error: authError } = await supabase.auth.updateUser({
         data: {
           full_name: formData.fullName,
           username: formData.username,
           bio: formData.bio,
-          avatar_url: avatarUrl
+          location: formData.location,
+          website: formData.website,
+          company: formData.company,
+          avatar_url: finalAvatarUrl
         }
       });
 
-      if (error) throw error;
+      if (authError) throw authError;
+
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          full_name: formData.fullName,
+          username: formData.username,
+          bio: formData.bio,
+          location: formData.location,
+          website: formData.website,
+          company: formData.company,
+          avatar_url: finalAvatarUrl,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'id'
+        });
+
+      if (profileError) throw profileError;
+
+      setAvatarUrl(finalAvatarUrl);
+      setAvatarFile(null);
       setIsEditing(false);
-      alert('Profile updated!');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      alert('Failed to update profile.');
+      setSaveSuccess(true);
+      
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error: any) {
+      console.error('Error saving profile:', error);
+      alert(error.message || 'Failed to save profile. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
   const handleCancelEdit = () => {
-    setFormData({
-      fullName: user?.user_metadata?.full_name || '',
-      username: user?.user_metadata?.username || '',
-      bio: user?.user_metadata?.bio || '',
-    });
-    setAvatarUrl(user?.user_metadata?.avatar_url || '');
+    loadUserProfile();
+    setAvatarFile(null);
     setIsEditing(false);
   };
 
@@ -210,310 +193,457 @@ export const Dashboard: React.FC<DashboardProps> = ({ setActiveView, setShowWiza
     return name.split(' ').map((w: string) => w[0]).join('').toUpperCase().slice(0, 2);
   };
 
-  const statCards = [
-    { label: 'Total Migrations', value: stats.totalMigrations, icon: RefreshCw, color: 'bg-blue-600' },
-    { label: 'Completed', value: stats.completedMigrations, icon: TrendingUp, color: 'bg-green-600' },
-    { label: 'Active', value: stats.activeMigrations, icon: FileJson, color: 'bg-amber-600' },
-    { label: 'Agents', value: stats.totalAgents, icon: Bot, color: 'bg-purple-600' },
-  ];
-
-  if (!user) return <div className="p-8">Loading...</div>;
+  if (!user) return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent"></div>
+    </div>
+  );
 
   return (
-    <div className="p-8 max-w-7xl mx-auto bg-slate-50 min-h-screen">
-      {/* Profile Header Card - Clean Solid Colors */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-6">
-        {/* Solid Color Header */}
-        <div className="h-32 bg-blue-600"></div>
-        
-        <div className="px-8 pb-6">
-          <div className="flex items-start gap-6 -mt-16 mb-6">
-            <div className="relative group">
-              <div
-                onClick={handleAvatarClick}
-                className={`w-32 h-32 bg-white rounded-full border-4 border-white shadow-lg flex items-center justify-center overflow-hidden ${
-                  isEditing ? 'cursor-pointer' : ''
-                }`}
-              >
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 lg:p-8">
+      <div className="max-w-5xl mx-auto">
+        {/* Success Banner */}
+        {saveSuccess && (
+          <div className="mb-6 bg-green-50 border-2 border-green-200 rounded-xl p-4 flex items-center gap-3 animate-slideDown">
+            <CheckCircle className="text-green-600" size={24} />
+            <p className="text-green-800 font-semibold">Profile updated successfully!</p>
+          </div>
+        )}
+
+        {/* Main Profile Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-slate-200 overflow-hidden">
+          {/* Cover Image */}
+          <div className="h-48 bg-gradient-to-r from-blue-600 via-blue-500 to-purple-600 relative">
+            <div className="absolute inset-0 bg-black opacity-10"></div>
+          </div>
+
+          {/* Profile Content */}
+          <div className="px-6 sm:px-8 pb-8">
+            {/* Avatar & Edit Button */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between -mt-20 mb-6">
+              <div className="relative group mb-4 sm:mb-0">
+                <div
+                  onClick={handleAvatarClick}
+                  className={`w-32 h-32 bg-white rounded-2xl border-4 border-white shadow-xl flex items-center justify-center overflow-hidden ${
+                    isEditing ? 'cursor-pointer' : ''
+                  }`}
+                >
+                  {avatarUrl ? (
+                    <img src={avatarUrl} alt="Profile" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                      <span className="text-white text-4xl font-bold">{getInitials()}</span>
+                    </div>
+                  )}
+                  
+                  {isEditing && (
+                    <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="text-white" size={32} />
+                    </div>
+                  )}
+                </div>
+                <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                {!isEditing ? (
+                  <>
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    >
+                      <Edit2 size={18} />
+                      Edit Profile
+                    </button>
+                    <button
+                      onClick={() => setShowPasswordModal(true)}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-all"
+                    >
+                      <Lock size={18} />
+                      Password
+                    </button>
+                  </>
                 ) : (
-                  <div className="w-full h-full bg-blue-600 flex items-center justify-center">
-                    <span className="text-white text-3xl font-bold">{getInitials()}</span>
-                  </div>
-                )}
-                
-                {isEditing && (
-                  <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                    <Camera className="text-white" size={32} />
-                  </div>
+                  <>
+                    <button
+                      onClick={handleCancelEdit}
+                      disabled={isSaving}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-slate-200 text-slate-700 rounded-xl font-semibold hover:bg-slate-300 transition-all disabled:opacity-50"
+                    >
+                      <X size={18} />
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveProfile}
+                      disabled={isSaving}
+                      className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-semibold hover:bg-green-700 transition-all disabled:opacity-50 shadow-lg"
+                    >
+                      {isSaving ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save size={18} />
+                          Save Changes
+                        </>
+                      )}
+                    </button>
+                  </>
                 )}
               </div>
-              <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} className="hidden" />
             </div>
 
-            <div className="flex-1 mt-16">
-              {isEditing ? (
-                <div className="space-y-3">
-                  <input
-                    type="text"
-                    value={formData.fullName}
-                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                    placeholder="Full Name"
-                    className="w-full text-2xl font-bold border-2 border-slate-300 rounded-lg px-4 py-2 focus:border-blue-600 focus:outline-none"
-                  />
-                  <input
-                    type="text"
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    placeholder="@username"
-                    className="w-full text-lg border-2 border-slate-300 rounded-lg px-4 py-2 focus:border-blue-600 focus:outline-none"
-                  />
+            {/* Profile Form */}
+            <div className="space-y-6">
+              {/* Name & Username */}
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Full Name</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      placeholder="John Doe"
+                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none transition-colors"
+                    />
+                  ) : (
+                    <p className="text-2xl font-bold text-slate-900">{formData.fullName || 'Not set'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Username</label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={formData.username}
+                      onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, '') })}
+                      placeholder="johndoe"
+                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none transition-colors"
+                    />
+                  ) : (
+                    <p className="text-lg text-slate-600 pt-1">{formData.username ? `@${formData.username}` : 'Not set'}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Bio */}
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-2">Bio</label>
+                {isEditing ? (
                   <textarea
                     value={formData.bio}
                     onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    placeholder="Bio..."
-                    rows={2}
-                    className="w-full border-2 border-slate-300 rounded-lg px-4 py-2 focus:border-blue-600 focus:outline-none resize-none"
+                    placeholder="Tell us about yourself..."
+                    rows={3}
+                    maxLength={160}
+                    className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none transition-colors resize-none"
                   />
-                </div>
-              ) : (
-                <>
-                  <h2 className="text-3xl font-bold text-slate-900">{formData.fullName || 'Anonymous User'}</h2>
-                  <p className="text-lg text-slate-600 mt-1">{formData.username ? `@${formData.username}` : user.email}</p>
-                  {formData.bio && <p className="text-slate-700 mt-2">{formData.bio}</p>}
-                </>
-              )}
-            </div>
+                ) : (
+                  <p className="text-slate-700 leading-relaxed">{formData.bio || 'No bio added yet.'}</p>
+                )}
+                {isEditing && (
+                  <p className="text-xs text-slate-500 mt-1">{formData.bio.length}/160 characters</p>
+                )}
+              </div>
 
-            <div className="flex gap-2 mt-16">
-              {!isEditing ? (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                >
-                  <Edit2 size={18} />
-                  Edit
-                </button>
-              ) : (
-                <>
-                  <button
-                    onClick={handleCancelEdit}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300 transition-colors"
-                  >
-                    <X size={18} />
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleSaveProfile}
-                    disabled={isSaving}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
-                  >
-                    {isSaving ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        Saving...
-                      </>
+              {/* Additional Info */}
+              <div className="grid sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                    <MapPin size={16} />
+                    Location
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={formData.location}
+                      onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                      placeholder="New York, USA"
+                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none transition-colors"
+                    />
+                  ) : (
+                    <p className="text-slate-600">{formData.location || 'Not set'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                    <Briefcase size={16} />
+                    Company
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="text"
+                      value={formData.company}
+                      onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                      placeholder="Acme Inc"
+                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none transition-colors"
+                    />
+                  ) : (
+                    <p className="text-slate-600">{formData.company || 'Not set'}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-semibold text-slate-700 mb-2">
+                    <Globe size={16} />
+                    Website
+                  </label>
+                  {isEditing ? (
+                    <input
+                      type="url"
+                      value={formData.website}
+                      onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                      placeholder="https://example.com"
+                      className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none transition-colors"
+                    />
+                  ) : (
+                    formData.website ? (
+                      <a href={formData.website} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {formData.website}
+                      </a>
                     ) : (
-                      <>
-                        <Save size={18} />
-                        Save
-                      </>
-                    )}
-                  </button>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* Account Info Grid - Solid Colors */}
-          <div className="grid md:grid-cols-3 gap-4">
-            <div className="flex items-center gap-3 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Mail className="text-white" size={20} />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs text-slate-600 font-medium">Email</p>
-                <p className="text-sm font-semibold text-slate-900 truncate">{user.email}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
-              <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Calendar className="text-white" size={20} />
-              </div>
-              <div>
-                <p className="text-xs text-slate-600 font-medium">Member Since</p>
-                <p className="text-sm font-semibold text-slate-900">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Shield className="text-white" size={20} />
-              </div>
-              <div>
-                <p className="text-xs text-slate-600 font-medium">Plan</p>
-                <p className="text-sm font-semibold text-slate-900 capitalize">{subscription.plan}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Subscription Card - Solid Blue */}
-      <div className="bg-blue-600 rounded-xl p-6 mb-6 text-white shadow-sm">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-blue-100 font-medium">Current Plan</p>
-            <p className="text-3xl font-black capitalize mt-1">{subscription.plan}</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm text-blue-100 font-medium">Migrations Used</p>
-            <p className="text-3xl font-black mt-1">
-              {subscription.migrationsLimit === -1 
-                ? `${subscription.migrationsUsed} / ∞`
-                : `${subscription.migrationsUsed} / ${subscription.migrationsLimit}`
-              }
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Activation Buttons - Solid Colors */}
-      {subscription.plan === 'free' && (
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
-          <h3 className="text-lg font-bold text-slate-900 mb-2">Activate Subscription</h3>
-          <p className="text-sm text-slate-600 mb-4">After completing payment on Dodo, activate your plan here.</p>
-          <div className="flex gap-4">
-            <button
-              onClick={() => activateSubscription('basic')}
-              disabled={activating}
-              className="px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 font-semibold transition-colors disabled:opacity-50"
-            >
-              {activating ? 'Activating...' : '✓ Activate Basic'}
-            </button>
-            <button
-              onClick={() => activateSubscription('pro')}
-              disabled={activating}
-              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition-colors disabled:opacity-50"
-            >
-              {activating ? 'Activating...' : '✓ Activate Pro'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Warning - Solid Red */}
-      {!subscription.canMigrate && (
-        <div className="bg-red-50 border-2 border-red-200 rounded-xl p-4 mb-6 flex items-center gap-3">
-          <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
-            <AlertCircle className="text-white" size={20} />
-          </div>
-          <div className="flex-1">
-            <p className="font-bold text-red-900">Migration Limit Reached</p>
-            <p className="text-red-800 text-sm">Upgrade to continue migrating workflows.</p>
-          </div>
-          <button
-            onClick={() => setActiveView('billing')}
-            className="bg-red-600 text-white px-4 py-2 rounded-lg font-bold hover:bg-red-700 transition-colors"
-          >
-            Upgrade
-          </button>
-        </div>
-      )}
-
-      {/* Stats Cards - Solid Colors */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {statCards.map((card) => {
-          const Icon = card.icon;
-          return (
-            <div key={card.label} className="bg-white rounded-xl shadow-sm p-6 border border-slate-200">
-              <div className={`${card.color} w-12 h-12 rounded-lg flex items-center justify-center mb-4`}>
-                <Icon className="text-white" size={24} />
-              </div>
-              <p className="text-3xl font-bold text-slate-900">{card.value}</p>
-              <p className="text-slate-600 text-sm mt-1 font-medium">{card.label}</p>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Recent Migrations - Clean White */}
-      <div className="bg-white rounded-xl shadow-sm border border-slate-200">
-        <div className="p-6 border-b border-slate-200 flex items-center justify-between">
-          <h2 className="text-xl font-bold text-slate-900">Recent Migrations</h2>
-          <button
-            onClick={handleNewMigration}
-            disabled={!subscription.canMigrate}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-colors ${
-              subscription.canMigrate 
-                ? 'bg-blue-600 text-white hover:bg-blue-700' 
-                : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-            }`}
-          >
-            <Plus size={20} />
-            New Migration
-          </button>
-        </div>
-        <div className="divide-y divide-slate-200">
-          {recentMigrations.length === 0 ? (
-            <div className="p-8 text-center">
-              <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <FileJson className="text-slate-400" size={32} />
-              </div>
-              <p className="text-slate-600 font-medium mb-4">No migrations yet</p>
-              <button
-                onClick={handleNewMigration}
-                className="text-blue-600 hover:text-blue-700 font-semibold"
-              >
-                Create your first migration →
-              </button>
-            </div>
-          ) : (
-            recentMigrations.map((migration) => (
-              <div
-                key={migration.id}
-                className="p-6 hover:bg-slate-50 cursor-pointer transition-colors"
-                onClick={() => setActiveView('migrations')}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-slate-900 mb-1">{migration.name}</h3>
-                    <p className="text-sm text-slate-600">
-                      {migration.source_platform} → {migration.target_platforms.join(', ')}
-                    </p>
-                  </div>
-                  <span className={`px-3 py-1 rounded-lg text-xs font-semibold ${
-                    migration.status === 'completed' ? 'bg-green-100 text-green-700' :
-                    migration.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                    migration.status === 'failed' ? 'bg-red-100 text-red-700' :
-                    'bg-amber-100 text-amber-700'
-                  }`}>
-                    {migration.status}
-                  </span>
+                      <p className="text-slate-600">Not set</p>
+                    )
+                  )}
                 </div>
               </div>
-            ))
-          )}
+
+              {/* Account Info */}
+              <div className="border-t border-slate-200 pt-6 mt-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-4">Account Information</h3>
+                
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-200 rounded-xl">
+                    <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Mail className="text-white" size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-slate-600">Email Address</p>
+                      <p className="text-sm font-semibold text-slate-900 truncate mt-1">{user.email}</p>
+                      <span className="inline-flex items-center gap-1 text-xs text-green-600 mt-1">
+                        <Check size={12} />
+                        Verified
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Calendar className="text-white" size={20} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-600">Member Since</p>
+                      <p className="text-sm font-semibold text-slate-900 mt-1">
+                        {new Date(user.created_at).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Danger Zone */}
+              <div className="border-t border-slate-200 pt-6 mt-6">
+                <h3 className="text-lg font-bold text-red-600 mb-4">Danger Zone</h3>
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-200 text-red-600 rounded-xl font-semibold hover:bg-red-100 transition-all"
+                >
+                  <Trash2 size={18} />
+                  Delete Account
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Modals */}
       {showPasswordModal && <PasswordChangeModal onClose={() => setShowPasswordModal(false)} />}
       {showDeleteModal && <DeleteAccountModal onClose={() => setShowDeleteModal(false)} />}
+
+      {/* Animations */}
+      <style>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        .animate-slideDown {
+          animation: slideDown 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
 
-// Keep the same Password and Delete modals from previous version
+// Password Change Modal
 const PasswordChangeModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  // ... same as before
-  return null; // Use the same implementation as previous
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handlePasswordChange = async () => {
+    setError('');
+    
+    if (newPassword.length < 6) {
+      setError('Password must be at least 6 characters');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setError('Passwords do not match');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      
+      alert('Password updated successfully!');
+      onClose();
+    } catch (error: any) {
+      setError(error.message || 'Failed to update password');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold text-slate-900">Change Password</h2>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 transition-colors">
+            <X size={24} />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">New Password</label>
+            <input
+              type="password"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Enter new password"
+              className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-2">Confirm Password</label>
+            <input
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-blue-600 focus:outline-none"
+            />
+          </div>
+
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+              <AlertTriangle className="text-red-600 flex-shrink-0 mt-0.5" size={18} />
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          <div className="flex gap-3 pt-4">
+            <button
+              onClick={onClose}
+              disabled={isLoading}
+              className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handlePasswordChange}
+              disabled={isLoading}
+              className="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {isLoading ? 'Updating...' : 'Update Password'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
+// Delete Account Modal
 const DeleteAccountModal: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  // ... same as before
-  return null; // Use the same implementation as previous
+  const [confirmText, setConfirmText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleDelete = async () => {
+    if (confirmText !== 'DELETE') return;
+    
+    setIsLoading(true);
+    try {
+      await supabase.auth.signOut();
+      alert('Account deletion requested. You have been signed out.');
+      window.location.href = '/';
+    } catch (error) {
+      alert('Failed to process request');
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
+        <h2 className="text-2xl font-bold text-red-600 mb-4">Delete Account</h2>
+        
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+          <p className="text-sm text-red-700 font-semibold">⚠️ This action cannot be undone!</p>
+          <p className="text-sm text-red-600 mt-2">All your data will be permanently deleted.</p>
+        </div>
+
+        <label className="block text-sm font-semibold text-slate-700 mb-2">
+          Type <span className="font-mono bg-slate-100 px-2 py-0.5 rounded">DELETE</span> to confirm
+        </label>
+        <input
+          type="text"
+          value={confirmText}
+          onChange={(e) => setConfirmText(e.target.value)}
+          placeholder="Type DELETE"
+          className="w-full px-4 py-3 border-2 border-slate-300 rounded-xl focus:border-red-600 focus:outline-none mb-4"
+        />
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl font-semibold hover:bg-slate-200"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={confirmText !== 'DELETE' || isLoading}
+            className="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-semibold hover:bg-red-700 disabled:opacity-50"
+          >
+            {isLoading ? 'Deleting...' : 'Delete Account'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };

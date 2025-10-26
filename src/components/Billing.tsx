@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { Check, Zap, Crown, Infinity, Loader } from 'lucide-react';
+import { Check, Loader, ArrowRight, Sparkles, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../hooks/useSubscription';
 
@@ -9,11 +10,10 @@ export const Billing: React.FC = () => {
   const [isYearly, setIsYearly] = useState(true);
   const [loading, setLoading] = useState<string | null>(null);
 
-  // Get checkout links from environment variables
   const checkoutLinks = {
-    basic: {
-      monthly: import.meta.env.VITE_DODO_BASIC_MONTHLY_LINK,
-      yearly: import.meta.env.VITE_DODO_BASIC_YEARLY_LINK,
+    lite: {
+      monthly: import.meta.env.VITE_DODO_LITE_MONTHLY_LINK,
+      yearly: import.meta.env.VITE_DODO_LITE_YEARLY_LINK,
     },
     pro: {
       monthly: import.meta.env.VITE_DODO_PRO_MONTHLY_LINK,
@@ -23,279 +23,320 @@ export const Billing: React.FC = () => {
 
   const plans = [
     {
-      name: 'Basic',
-      planKey: 'basic' as const,
-      icon: Zap,
-      monthlyPrice: 9.99,
-      yearlyPrice: 6.49,
-      yearlyTotal: 77.88,
-      discount: 35,
-      description: 'Perfect for individuals and small projects',
+      name: 'Lite',
+      planKey: 'lite' as const,
+      monthlyPrice: 9,
+      yearlyPrice: 7,
+      yearlyTotal: 84,
+      description: 'For Freelancers and Solo Founders',
       features: [
-        '20 Migrations / Month',
-        'All platform support',
-        'No Watermark',
-        'Fast Conversion Speed',
-        'Email Support',
-        'Validation Reports'
+        '50 Migrations per month',
+        '100+ languages supported',
+        'Custom watermark',
+        'Email support'
       ],
+      gradient: 'from-slate-700 via-slate-800 to-slate-900'
     },
     {
       name: 'Pro',
       planKey: 'pro' as const,
-      icon: Crown,
-      monthlyPrice: 33.33,
-      yearlyPrice: 19.99,
-      yearlyTotal: 239.88,
-      discount: 40,
+      monthlyPrice: 19,
+      yearlyPrice: 17,
+      yearlyTotal: 204,
+      description: 'For Startups and Agencies',
       popular: true,
-      description: 'For teams and power users',
       features: [
-        'Unlimited Migrations',
-        'All platform support',
-        'Priority Conversion',
-        'Advanced Analytics',
-        'Priority Support',
-        'API Access',
-        'Team Collaboration',
-        'Custom Integrations'
+        '250 Migrations/month',
+        '100+ languages supported',
+        'Custom watermark',
+        'Add up to 5 users',
+        'High-importance email assistance'
       ],
+      gradient: 'from-blue-600 via-blue-700 to-blue-800'
     },
   ];
 
-  const handleCheckout = (planKey: 'basic' | 'pro', planName: string) => {
-  const checkoutLink = isYearly ? checkoutLinks[planKey].yearly : checkoutLinks[planKey].monthly;
+  const handleCheckout = (planKey: 'lite' | 'pro', planName: string) => {
+    const checkoutLink = isYearly ? checkoutLinks[planKey].yearly : checkoutLinks[planKey].monthly;
 
-  if (!checkoutLink || checkoutLink === 'undefined') {
-    alert('Checkout link not configured. Please add it to environment variables.');
-    console.error('Missing checkout link for:', planKey, isYearly ? 'yearly' : 'monthly');
-    return;
-  }
+    if (!checkoutLink || checkoutLink === 'undefined') {
+      alert('Checkout link not configured.');
+      return;
+    }
 
-  if (!user) {
-    alert('Please sign in to purchase a plan.');
-    return;
-  }
+    if (!user) {
+      alert('Please sign in to purchase a plan.');
+      return;
+    }
 
-  setLoading(planName);
-
-  // Simply redirect to Dodo checkout link
-  window.location.href = checkoutLink;
-};
+    setLoading(planName);
+    window.location.href = checkoutLink;
+  };
 
   return (
-    <div className="min-h-screen bg-white p-8">
-      <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-5xl font-black text-gray-900 mb-4">
-            Pricing tailored to your needs
-          </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            The first 10 credits are on us. If you love it, then help us run the company with a paid plan.
-          </p>
-        </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 py-20 px-4 overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          animate={{
+            scale: [1, 1.2, 1],
+            rotate: [0, 90, 0],
+            opacity: [0.03, 0.06, 0.03]
+          }}
+          transition={{ duration: 20, repeat: Infinity }}
+          className="absolute -top-40 -right-40 w-96 h-96 bg-blue-500 rounded-full blur-3xl"
+        />
+        <motion.div
+          animate={{
+            scale: [1, 1.3, 1],
+            rotate: [0, -90, 0],
+            opacity: [0.03, 0.06, 0.03]
+          }}
+          transition={{ duration: 25, repeat: Infinity }}
+          className="absolute -bottom-40 -left-40 w-96 h-96 bg-purple-500 rounded-full blur-3xl"
+        />
+      </div>
 
-        {/* Billing Toggle */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="inline-flex bg-white rounded-lg border-2 border-gray-300 p-1">
+      <div className="max-w-6xl mx-auto relative z-10">
+        {/* Header with Animation */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-16"
+        >
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-2 rounded-full text-sm font-semibold mb-6"
+          >
+            <Sparkles size={16} />
+            Simple & Transparent Pricing
+          </motion.div>
+
+          <h1 className="text-5xl md:text-6xl font-black text-slate-900 mb-6 leading-tight">
+            Choose Your Plan
+          </h1>
+          <p className="text-xl text-slate-600 max-w-2xl mx-auto">
+            Start free, upgrade when you're ready. No surprises.
+          </p>
+        </motion.div>
+
+        {/* Billing Toggle with Animation */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.3 }}
+          className="flex justify-center mb-16"
+        >
+          <div className="relative inline-flex bg-white rounded-2xl border-2 border-slate-200 p-2 shadow-xl">
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl opacity-10"
+              animate={{ opacity: [0.1, 0.15, 0.1] }}
+              transition={{ duration: 3, repeat: Infinity }}
+            />
             <button
               onClick={() => setIsYearly(false)}
-              className={`px-8 py-3 rounded-lg font-semibold transition-all ${
+              className={`relative z-10 px-8 py-3 rounded-xl font-semibold transition-all ${
                 !isYearly
-                  ? 'bg-gray-100 text-gray-900'
-                  : 'text-gray-600'
+                  ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              Monthly billing
+              Monthly
             </button>
             <button
               onClick={() => setIsYearly(true)}
-              className={`px-8 py-3 rounded-lg font-semibold transition-all ${
+              className={`relative z-10 px-8 py-3 rounded-xl font-semibold transition-all ${
                 isYearly
-                  ? 'bg-gray-100 text-gray-900'
-                  : 'text-gray-600'
+                  ? 'bg-gradient-to-r from-slate-800 to-slate-900 text-white shadow-lg'
+                  : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              {isYearly && '✓ '}Yearly billing
+              Yearly
+              <motion.span
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+                className="absolute -top-2 -right-2 bg-green-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow-lg"
+              >
+                22% OFF
+              </motion.span>
             </button>
           </div>
-          
-          {isYearly && (
-            <div className="mt-4 flex items-center gap-2 text-gray-700">
-              <div className="text-2xl">↑</div>
-              <p className="font-medium">Get 2 months free when paying yearly.</p>
-            </div>
-          )}
-        </div>
+        </motion.div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-12">
-          {plans.map((plan) => {
-            const Icon = plan.icon;
+        {/* Pricing Cards with Stagger Animation */}
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {plans.map((plan, index) => {
             const price = isYearly ? plan.yearlyPrice : plan.monthlyPrice;
             const isLoading = loading === plan.name;
             const isCurrentPlan = subscription.plan === plan.planKey;
             
             return (
-              <div
+              <motion.div
                 key={plan.name}
-                className={`relative bg-white rounded-2xl p-8 border-2 transition-all hover:shadow-xl ${
-                  isCurrentPlan
-                    ? 'border-green-500 shadow-2xl'
-                    : plan.popular
-                    ? 'border-blue-500 shadow-2xl'
-                    : 'border-gray-300 shadow-lg'
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 + index * 0.1, duration: 0.5 }}
+                whileHover={{ y: -8, transition: { duration: 0.3 } }}
+                className={`relative bg-white rounded-3xl shadow-2xl overflow-hidden ${
+                  plan.popular ? 'ring-4 ring-blue-500 md:scale-105' : ''
                 }`}
               >
-                {isCurrentPlan && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-green-600 text-white text-sm font-bold px-4 py-1.5 rounded-full">
-                      Current Plan
-                    </span>
-                  </div>
-                )}
-
-                {!isCurrentPlan && plan.popular && (
-                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                    <span className="bg-blue-500 text-white text-sm font-bold px-4 py-1.5 rounded-full">
-                      Most popular
-                    </span>
-                  </div>
-                )}
-
-                <div className="mb-6">
-                  <div className={`inline-flex p-3 rounded-xl mb-4 ${
-                    isCurrentPlan ? 'bg-green-100' : plan.popular ? 'bg-blue-100' : 'bg-orange-100'
-                  }`}>
-                    <Icon
-                      className={isCurrentPlan ? 'text-green-600' : plan.popular ? 'text-blue-600' : 'text-orange-600'}
-                      size={32}
-                    />
-                  </div>
-
-                  <div className="flex items-baseline gap-3 mb-4">
-                    <h3 className="text-3xl font-black text-gray-900">{plan.name}</h3>
-                    {isYearly && (
-                      <span className="text-sm font-bold text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                        save {plan.discount}%
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="mb-2">
-                    <span className="text-5xl font-black text-gray-900">${price}</span>
-                    <span className="text-xl text-gray-600 ml-2">/month</span>
-                  </div>
-                  
-                  <p className="text-gray-500 text-sm mb-4">
-                    {isYearly ? '(*billed yearly)' : '(*billed monthly)'}
-                  </p>
-                  
-                  <p className="text-gray-600 font-medium">{plan.description}</p>
-                </div>
-
-                <ul className="space-y-3 mb-8">
-                  {plan.features.map((feature, index) => (
-                    <li key={index} className="flex items-start gap-3">
-                      <Check className="text-green-500 flex-shrink-0 mt-0.5" size={20} />
-                      <span className="text-gray-700">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <button
-                  onClick={() => handleCheckout(plan.planKey, plan.name)}
-                  disabled={isLoading || isCurrentPlan}
-                  className={`w-full py-4 rounded-lg font-bold text-lg transition-all flex items-center justify-center gap-2 ${
-                    isCurrentPlan
-                      ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                      : plan.popular
-                      ? 'bg-blue-500 text-white hover:bg-blue-600 shadow-lg disabled:bg-blue-400'
-                      : 'bg-gray-900 text-white hover:bg-gray-800 disabled:bg-gray-700'
-                  }`}
+                {/* Animated Gradient Header */}
+                <motion.div
+                  className={`relative bg-gradient-to-br ${plan.gradient} p-8 text-white overflow-hidden`}
+                  animate={{
+                    backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
+                  }}
+                  transition={{ duration: 10, repeat: Infinity }}
+                  style={{ backgroundSize: '200% 200%' }}
                 >
-                  {isLoading ? (
-                    <>
-                      <Loader className="animate-spin" size={20} />
-                      Redirecting...
-                    </>
-                  ) : isCurrentPlan ? (
-                    'Current Plan'
-                  ) : (
-                    'Get Started'
-                  )}
-                </button>
+                  {/* Floating Particles */}
+                  <motion.div
+                    animate={{
+                      y: [0, -20, 0],
+                      opacity: [0.3, 0.6, 0.3]
+                    }}
+                    transition={{ duration: 4, repeat: Infinity }}
+                    className="absolute top-10 right-10 w-20 h-20 bg-white rounded-full blur-xl"
+                  />
+                  <motion.div
+                    animate={{
+                      y: [0, 20, 0],
+                      opacity: [0.2, 0.5, 0.2]
+                    }}
+                    transition={{ duration: 5, repeat: Infinity }}
+                    className="absolute bottom-10 left-10 w-32 h-32 bg-white rounded-full blur-xl"
+                  />
 
-                {isYearly && (
-                  <p className="text-center text-sm text-gray-500 mt-3">
-                    ${plan.yearlyTotal} billed yearly
-                  </p>
-                )}
-              </div>
+                  <div className="relative z-10">
+                    {plan.popular && (
+                      <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ delay: 0.6, type: "spring" }}
+                        className="absolute -top-4 -right-4"
+                      >
+                        <span className="bg-yellow-400 text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-xl flex items-center gap-1">
+                          <Zap size={12} />
+                          POPULAR
+                        </span>
+                      </motion.div>
+                    )}
+
+                    <h3 className="text-3xl font-black mb-2">{plan.name}</h3>
+                    <p className="text-white/80 text-sm mb-8">{plan.description}</p>
+
+                    <div className="flex items-baseline gap-2 mb-2">
+                      <motion.span
+                        key={price}
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ type: "spring", stiffness: 200 }}
+                        className="text-7xl font-black"
+                      >
+                        ${price}
+                      </motion.span>
+                      <span className="text-xl text-white/80">/month</span>
+                    </div>
+
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.5 }}
+                      className="text-white/70 text-sm"
+                    >
+                      {isYearly ? `$${plan.yearlyTotal} billed annually` : 'Billed monthly'}
+                    </motion.p>
+                  </div>
+                </motion.div>
+
+                {/* Features */}
+                <div className="p-8">
+                  <ul className="space-y-4 mb-8">
+                    {plan.features.map((feature, idx) => (
+                      <motion.li
+                        key={idx}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.6 + idx * 0.1 }}
+                        className="flex items-start gap-3"
+                      >
+                        <motion.div
+                          whileHover={{ scale: 1.2, rotate: 360 }}
+                          transition={{ duration: 0.5 }}
+                          className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center"
+                        >
+                          <Check className="text-green-600" size={14} />
+                        </motion.div>
+                        <span className="text-slate-700 font-medium">{feature}</span>
+                      </motion.li>
+                    ))}
+                  </ul>
+
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => handleCheckout(plan.planKey, plan.name)}
+                    disabled={isLoading || isCurrentPlan}
+                    className={`w-full py-4 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2 shadow-lg ${
+                      isCurrentPlan
+                        ? 'bg-slate-200 text-slate-500 cursor-not-allowed'
+                        : plan.popular
+                        ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white hover:from-blue-700 hover:to-blue-800 hover:shadow-2xl'
+                        : 'bg-gradient-to-r from-slate-800 to-slate-900 text-white hover:from-slate-900 hover:to-black hover:shadow-2xl'
+                    }`}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader className="animate-spin" size={20} />
+                        Processing...
+                      </>
+                    ) : isCurrentPlan ? (
+                      '✓ Current Plan'
+                    ) : (
+                      <>
+                        Get Started
+                        <ArrowRight size={20} />
+                      </>
+                    )}
+                  </motion.button>
+                </div>
+              </motion.div>
             );
           })}
         </div>
 
-        {/* Comparison Table */}
-        <div className="bg-gray-50 rounded-2xl p-8 max-w-4xl mx-auto mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">
-            Plan Comparison
-          </h2>
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b-2 border-gray-300">
-                  <th className="text-left py-3 px-4 text-gray-900 font-bold">Feature</th>
-                  <th className="text-center py-3 px-4 text-gray-900 font-bold">Basic</th>
-                  <th className="text-center py-3 px-4 text-gray-900 font-bold">Pro</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-gray-200">
-                  <td className="py-3 px-4 font-medium">Migrations per month</td>
-                  <td className="text-center py-3 px-4">20</td>
-                  <td className="text-center py-3 px-4">
-                    <div className="flex items-center justify-center gap-1">
-                      <Infinity size={20} className="text-blue-500" />
-                      Unlimited
-                    </div>
-                  </td>
-                </tr>
-                <tr className="border-b border-gray-200">
-                  <td className="py-3 px-4 font-medium">Platform support</td>
-                  <td className="text-center py-3 px-4">✓</td>
-                  <td className="text-center py-3 px-4">✓</td>
-                </tr>
-                <tr className="border-b border-gray-200">
-                  <td className="py-3 px-4 font-medium">Conversion speed</td>
-                  <td className="text-center py-3 px-4">Fast</td>
-                  <td className="text-center py-3 px-4 text-blue-600 font-semibold">Priority</td>
-                </tr>
-                <tr className="border-b border-gray-200">
-                  <td className="py-3 px-4 font-medium">Support</td>
-                  <td className="text-center py-3 px-4">Email</td>
-                  <td className="text-center py-3 px-4 text-blue-600 font-semibold">Priority</td>
-                </tr>
-                <tr className="border-b border-gray-200">
-                  <td className="py-3 px-4 font-medium">API Access</td>
-                  <td className="text-center py-3 px-4">✗</td>
-                  <td className="text-center py-3 px-4">✓</td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Bottom CTA Banner */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+          className="mt-20 relative overflow-hidden"
+        >
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-3xl blur-xl opacity-30 animate-pulse" />
+          <div className="relative bg-gradient-to-r from-blue-600 via-purple-600 to-blue-600 rounded-3xl p-12 text-center text-white shadow-2xl">
+            <motion.h2
+              animate={{ scale: [1, 1.02, 1] }}
+              transition={{ duration: 3, repeat: Infinity }}
+              className="text-4xl font-black mb-4"
+            >
+              Start Free Today 🚀
+            </motion.h2>
+            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+             Get free 5 credits 
+            </p>
+            <motion.button
+              whileHover={{ scale: 1.05, boxShadow: "0 20px 40px rgba(0,0,0,0.3)" }}
+              whileTap={{ scale: 0.95 }}
+              className="bg-white text-blue-600 px-10 py-4 rounded-2xl font-bold text-lg hover:bg-slate-50 transition-all shadow-xl"
+            >
+              Start Converting Now
+            </motion.button>
           </div>
-        </div>
-
-        {/* Free Trial Banner */}
-        <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-8 text-center text-white max-w-4xl mx-auto">
-          <h2 className="text-3xl font-bold mb-3">
-            Start with 10 free migrations
-          </h2>
-          <p className="text-blue-100 text-lg mb-6">
-            No credit card required. Start converting workflows right now.
-          </p>
-        </div>
+        </motion.div>
       </div>
     </div>
   );

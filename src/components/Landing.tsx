@@ -212,7 +212,7 @@ export const Landing: React.FC = () => {
               { name: 'Zapier', letter: 'Z', color: 'bg-orange-500', delay: '0s' },
               { name: 'n8n', letter: 'n8n', color: 'bg-pink-500', delay: '0.2s' },
               { name: 'Make', letter: 'M', color: 'bg-purple-500', delay: '0.4s' },
-              { name: 'Python', letter: 'Py', color: 'bg-blue-600', delay: '0.6s' }
+             
             ].map((platform, index) => (
               <React.Fragment key={index}>
                 <div className="flex flex-col items-center gap-3" style={{ animation: `float 3s ease-in-out ${platform.delay} infinite` }}>
@@ -229,7 +229,7 @@ export const Landing: React.FC = () => {
               </React.Fragment>
             ))}
           </div>
-        </div>
+        </div>  
       </section>
 
       {/* Features Section - Updated with Python */}
@@ -452,78 +452,71 @@ export const Landing: React.FC = () => {
       </section>
 
       {/* How It Works - Updated */}
-      <section id="how-it-works" className="bg-gray-50 py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-gray-900 mb-4">
-              How It Works
-            </h2>
-            <p className="text-lg sm:text-xl text-gray-600">
-              Choose your path: Migrate workflows OR generate Python code
-            </p>
-          </div>
+      <section id="how-it-works" className="bg-gray-50 py-16">
+  <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="text-center mb-12">
+      <h2 className="text-3xl sm:text-4xl font-black text-gray-900 mb-3">
+        How It Works
+      </h2>
+      <p className="text-lg text-gray-600">
+        Simple 3-step process for both tools
+      </p>
+    </div>
 
-          {/* Workflow Migration Path */}
-          <div className="mb-16">
-            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-              <Workflow className="inline-block mr-2 text-orange-500" size={28} />
-              Workflow Migration
-            </h3>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { step: '1', title: 'Upload JSON', desc: 'Export workflow from Zapier, n8n, or Make' },
-                { step: '2', title: 'Select Target', desc: 'Choose destination platform(s)' },
-                { step: '3', title: 'Download & Import', desc: 'Get converted workflow ready to use' }
-              ].map((item, index) => (
-                <div key={index} className="relative">
-                  <div className="bg-white p-8 rounded-2xl border-2 border-gray-200 hover:border-orange-500 transition-all">
-                    <div className="w-16 h-16 bg-orange-500 text-white rounded-2xl flex items-center justify-center text-3xl font-black mb-6 shadow-lg">
-                      {item.step}
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
-                    <p className="text-gray-600">{item.desc}</p>
-                  </div>
-                  {index < 2 && (
-                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                      <ArrowRight className="text-orange-500" size={32} />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
+    <div className="grid md:grid-cols-2 gap-8">
+      {/* Workflow Migration */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-orange-200">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center">
+            <Workflow className="text-white" size={24} />
           </div>
-
-          {/* Python Generation Path */}
-          <div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-8 text-center">
-              <Code className="inline-block mr-2 text-blue-600" size={28} />
-              Python Code Generation
-            </h3>
-            <div className="grid md:grid-cols-3 gap-8">
-              {[
-                { step: '1', title: 'Upload Workflow', desc: 'Upload your complex n8n/Zapier workflow' },
-                { step: '2', title: 'Generate Code', desc: 'Get production-ready async Python code' },
-                { step: '3', title: 'Run Anywhere', desc: 'Deploy on servers, cloud, or local - unlimited scale' }
-              ].map((item, index) => (
-                <div key={index} className="relative">
-                  <div className="bg-white p-8 rounded-2xl border-2 border-gray-200 hover:border-blue-600 transition-all">
-                    <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-3xl font-black mb-6 shadow-lg">
-                      {item.step}
-                    </div>
-                    <h3 className="text-xl font-bold text-gray-900 mb-3">{item.title}</h3>
-                    <p className="text-gray-600">{item.desc}</p>
-                  </div>
-                  {index < 2 && (
-                    <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2">
-                      <ArrowRight className="text-blue-600" size={32} />
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
+          <h3 className="text-xl font-bold text-gray-900">Workflow Migration</h3>
         </div>
-      </section>
+        
+        <div className="space-y-4">
+          {[
+            { num: '1', text: 'Upload workflow JSON from Zapier, n8n, or Make' },
+            { num: '2', text: 'Select target platform(s) to convert to' },
+            { num: '3', text: 'Download converted workflow and import' }
+          ].map((step, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">
+                {step.num}
+              </div>
+              <p className="text-gray-700 text-sm pt-1">{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Python Generation */}
+      <div className="bg-white rounded-2xl p-6 border-2 border-blue-200">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+            <Code className="text-white" size={24} />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900">Python Generation</h3>
+        </div>
+        
+        <div className="space-y-4">
+          {[
+            { num: '1', text: 'Upload your workflow JSON file' },
+            { num: '2', text: 'Get production-ready async Python code' },
+            { num: '3', text: 'Run anywhere - unlimited scale & power' }
+          ].map((step, i) => (
+            <div key={i} className="flex items-start gap-3">
+              <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center font-bold text-sm flex-shrink-0">
+                {step.num}
+              </div>
+              <p className="text-gray-700 text-sm pt-1">{step.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 
       {/* CTA Section */}
       <section className="py-20">

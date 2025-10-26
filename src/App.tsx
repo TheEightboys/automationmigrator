@@ -1,20 +1,18 @@
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
 import { AuthCallback } from './components/AuthCallback';
 import { Sidebar } from './components/Sidebar';
 import { Dashboard } from './components/Dashboard';
-import { Migrations } from './components/Migrations';
+import { Migrations } from './components/Migrations'; 
 import { Agents } from './components/Agents';
 import { Help } from './components/Help';
 import { Billing } from './components/Billing';
-
 import { MigrationWizard } from './components/MigrationWizard';
 import { Landing } from './components/Landing';
 import { RefreshCw } from 'lucide-react';
-import { useEffect } from 'react';
-
+import { BackendCode } from './components/BackendCode';
 // Protected Route Component
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -48,11 +46,19 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function DashboardLayout() {
   const [activeView, setActiveView] = useState('dashboard');
   const [showWizard, setShowWizard] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const handleWizardComplete = () => {
-    setActiveView('migrations');
+  const handleWizardComplete = useCallback(() => {
+    console.log('✅ Migration created successfully!');
     setShowWizard(false);
-  };
+    setActiveView('migrations');
+    setRefreshTrigger(prev => prev + 1);
+  }, []);
+
+  const handleWizardClose = useCallback(() => {
+    console.log('Wizard closed');
+    setShowWizard(false);
+  }, []);
 
   return (
     <div className="flex h-screen bg-slate-100">
@@ -61,20 +67,29 @@ function DashboardLayout() {
         {activeView === 'dashboard' && (
           <Dashboard setActiveView={setActiveView} setShowWizard={setShowWizard} />
         )}
-        {activeView === 'migrations' && <Migrations />}
+        {activeView === 'migrations' && (
+          <Migrations 
+            key={refreshTrigger} 
+            setShowWizard={setShowWizard} 
+          />
+        )}
         {activeView === 'agents' && <Agents />}
         {activeView === 'help' && <Help />}
         {activeView === 'billing' && <Billing />}
-       
+        {activeView === 'backend-code' && <BackendCode />} 
       </main>
+      
       {showWizard && (
-        <MigrationWizard onClose={() => setShowWizard(false)} onComplete={handleWizardComplete} />
+        <MigrationWizard 
+          onClose={handleWizardClose} 
+          onComplete={handleWizardComplete} 
+        />
       )}
     </div>
   );
 }
 
-// Public Route - Redirects logged-in users
+// Public Route Component
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -96,6 +111,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+// Main App Component
 function App() {
   return (
     <AuthProvider>
@@ -132,7 +148,7 @@ function App() {
             }
           />
 
-          {/* Catch all */}
+          {/* Catch all - redirect to home */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
