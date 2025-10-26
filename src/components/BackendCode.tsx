@@ -70,8 +70,8 @@ const handleGeneratePython = async (id: string, filename: string) => {
     console.log('🐍 Fetching Python code...');
     
     // Get API_URL from environment
-   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-console.log('Using API URL:', API_URL); // Add this debug line
+const API_URL = 'https://migromat-backend.onrender.com';
+console.log('Using API URL:', API_URL);
 
 const response = await fetch(`${API_URL}/api/workflows/${id}/export/python`, {
   method: 'POST'
