@@ -7,7 +7,22 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// ✅ Create client with proper headers and configuration
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+  },
+  global: {
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+    }
+  },
+  db: {
+    schema: 'public'
+  }
+});
 
 export type Profile = {
   id: string;
@@ -52,6 +67,7 @@ export type HelpArticle = {
   created_at: string;
   updated_at: string;
 };
+
 export type WorkflowTemplate = {
   id: string;
   seller_id: string;
